@@ -1,0 +1,60 @@
+from pathlib import Path
+
+import typer
+
+from azauth.commands import login, logout, status, token
+
+app = typer.Typer(
+    name="azauth",
+    help="Azure CLI authenticator — email/password login with automatic MFA fallback.",
+    no_args_is_help=True,
+)
+
+app.command(name="login")(login.login)
+app.command(name="logout")(logout.logout)
+app.command(name="status")(status.status)
+app.command(name="token")(token.token_cmd)
+
+
+def _version_callback(value: bool) -> None:
+    if value:
+        from importlib.metadata import version
+        try:
+            ver = version("azauth")
+        except Exception:
+            ver = "0.1.0 (dev)"
+        typer.echo(f"azauth {ver}")
+        raise typer.Exit()
+
+
+@app.callback()
+def main(
+    ctx: typer.Context,
+    version: bool = typer.Option(
+        False, "--version", "-V", help="Show version and exit", callback=_version_callback,
+        is_eager=True,
+    ),
+    verbose: bool = typer.Option(False, "--verbose", "-v", help="Verbose logging"),
+    quiet: bool = typer.Option(False, "--quiet", "-q", help="Suppress non-data output"),
+):
+    import logging
+
+    level = logging.WARNING
+    if verbose:
+        level = logging.DEBUG
+    elif quiet:
+        level = logging.ERROR
+
+    logging.basicConfig(
+        level=level,
+        format="%(levelname)s %(message)s",
+        stream=__import__("sys").stderr,
+    )
+
+    ctx.ensure_object(dict)
+    ctx.obj["verbose"] = verbose
+    ctx.obj["quiet"] = quiet
+
+
+if __name__ == "__main__":
+    app()
