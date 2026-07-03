@@ -223,5 +223,28 @@ class AzureAuthenticator:
             return cached
         return self.authenticate()
 
+    def get_token_for_scopes(self, scopes: list[str]) -> AuthResult:
+        accounts = self.app.get_accounts()
+        if accounts:
+            for account in accounts:
+                result = self.app.acquire_token_silent(scopes=scopes, account=account)
+                if result and "access_token" in result:
+                    self._cached_account = account
+                    self.save_token_cache()
+                    return AuthResult(
+                        success=True,
+                        token=result,
+                        username=account.get("username"),
+                        tenant_id=account.get("tenant_id"),
+                    )
+        log.info("No cached token for scopes %s — starting device code flow", scopes)
+        saved = self.creds.scopes
+        self.creds.scopes = scopes
+        try:
+            result = self._device_code_flow()
+            return result
+        finally:
+            self.creds.scopes = saved
+
     def list_accounts(self) -> list[dict]:
         return self.app.get_accounts()

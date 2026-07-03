@@ -3,6 +3,7 @@ from pathlib import Path
 import typer
 
 from azauth.commands import login, logout, status, token
+from azauth.commands import enumerate as enumerate_cmd_mod
 
 app = typer.Typer(
     name="azauth",
@@ -14,6 +15,7 @@ app.command(name="login")(login.login)
 app.command(name="logout")(logout.logout)
 app.command(name="status")(status.status)
 app.command(name="token")(token.token_cmd)
+app.command(name="enumerate", help="Enumerate all accessible Azure assets.")(enumerate_cmd_mod.enumerate_cmd)
 
 
 def _version_callback(value: bool) -> None:
