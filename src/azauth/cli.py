@@ -5,6 +5,7 @@ import typer
 from azauth.commands import login, logout, status, token
 from azauth.commands import enumerate as enumerate_cmd_mod
 from azauth.commands import pipeline as pipeline_mod
+from azauth.commands import exploit as exploit_mod
 
 app = typer.Typer(
     name="azauth",
@@ -21,6 +22,10 @@ app.command(
     name="pipeline",
     help="Run the full Azure → BHCE → custom Graph enumeration pipeline.",
 )(pipeline_mod.pipeline)
+app.command(
+    name="exploit",
+    help="Discover Azure resources, check RBAC, and extract managed identity tokens.",
+)(exploit_mod.exploit)
 
 
 def _version_callback(value: bool) -> None:
