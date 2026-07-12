@@ -29,3 +29,7 @@ Thumbs.db
 # Environment
 .env
 .env.*
+
+# AzureHound binary
+azurehound
+*.zip
