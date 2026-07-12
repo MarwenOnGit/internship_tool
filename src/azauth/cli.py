@@ -6,6 +6,7 @@ from azauth.commands import login, logout, status, token
 from azauth.commands import enumerate as enumerate_cmd_mod
 from azauth.commands import pipeline as pipeline_mod
 from azauth.commands import exploit as exploit_mod
+from azauth.commands import db as db_mod
 
 app = typer.Typer(
     name="azauth",
@@ -26,6 +27,7 @@ app.command(
     name="exploit",
     help="Discover Azure resources, check RBAC, and extract managed identity tokens.",
 )(exploit_mod.exploit)
+app.add_typer(db_mod.db_app)
 
 
 def _version_callback(value: bool) -> None:
