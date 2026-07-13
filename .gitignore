@@ -8,7 +8,8 @@ build/
 # Virtual environment
 .venv/
 .venv*/
-
+.neo4j/
+.neo4j*/
 # Testing
 .pytest_cache/
 coverage/

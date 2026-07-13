@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+from pathlib import Path
 
 import typer
 from rich.console import Console
@@ -120,8 +121,6 @@ def db_ingest(
 
     from azauth.db.ingest import ingest_azurehound
 
-    total = {"subs": 0, "groups": 0, "resources": 0, "vms": 0, "mis": 0, "sps": 0}
-
     if azurehound:
         console.print(f"[cyan]Ingesting AzureHound data from[/cyan] {azurehound}")
         ah_counts = ingest_azurehound(conn, azurehound, tenant)
@@ -184,4 +183,4 @@ def db_export_query(
         conn.close()
 
 
-from pathlib import Path  # noqa: E402
+

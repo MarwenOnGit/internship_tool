@@ -51,9 +51,9 @@ class Neo4jConnection:
         with self._driver.session(database=self.database) as session:
             session.execute_write(lambda tx: tx.run(query, params or {}))
 
-    def __enter__(self):
+    def __enter__(self) -> Neo4jConnection:
         self.connect()
         return self
 
-    def __exit__(self, *args):
+    def __exit__(self, *args: object) -> None:
         self.close()

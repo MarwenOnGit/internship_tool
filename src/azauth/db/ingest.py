@@ -55,31 +55,30 @@ def ingest_exploit_result(
 
     for group in result.interesting_groups:
         sub_name = group["subscription"]
+        sub_id = _find_sub_id(result.subscriptions, sub_name)
         rg_name = group["resource_group"]
         roles = group["roles"]
-        rg_id = f"/subscriptions/{_find_sub_id(result.subscriptions, sub_name)}/resourceGroups/{rg_name}"
+        rg_id = f"/subscriptions/{sub_id}/resourceGroups/{rg_name}"
 
         conn.run_in_tx(
             """
-            MATCH (s:Subscription {display_name: $sub_name, tenant_id: $tenant_id})
+            MATCH (s:Subscription {subscription_id: $sub_id, tenant_id: $tenant_id})
             MERGE (rg:ResourceGroup {id: $id})
             SET rg.name = $name,
                 rg.tenant_id = $tenant_id,
                 rg.roles = $roles,
-                rg.subscription_id = s.subscription_id
+                rg.subscription_id = $sub_id
             MERGE (rg)-[:IN_SUBSCRIPTION]->(s)
             """,
             {
                 "id": rg_id,
                 "name": rg_name,
-                "sub_name": sub_name,
+                "sub_id": sub_id,
                 "roles": _sanitize(list(roles)),
                 "tenant_id": tenant_id,
             },
         )
         counts["groups"] += 1
-
-        sub_id = _find_sub_id(result.subscriptions, sub_name)
 
         for r in group.get("all_resources", []):
             _ingest_resource(conn, r, rg_name, sub_id, tenant_id)
@@ -94,7 +93,7 @@ def ingest_exploit_result(
             counts["mis"] += 1
 
         for sp in group.get("service_principals", []):
-            _ingest_sp(conn, sp, rg_name, tenant_id)
+            _ingest_sp(conn, sp, rg_name, sub_id, tenant_id)
             counts["sps"] += 1
 
     return counts
@@ -116,7 +115,7 @@ def _ingest_resource(
 ) -> None:
     conn.run_in_tx(
         """
-        MATCH (rg:ResourceGroup {name: $rg_name, tenant_id: $tenant_id})
+        MATCH (rg:ResourceGroup {name: $rg_name, subscription_id: $sub_id, tenant_id: $tenant_id})
         MERGE (res:Resource {id: $id})
         SET res.name = $name,
             res.resource_type = $type,
@@ -155,7 +154,7 @@ def _ingest_vm(
 ) -> None:
     conn.run_in_tx(
         """
-        MATCH (rg:ResourceGroup {name: $rg_name, tenant_id: $tenant_id})
+        MATCH (rg:ResourceGroup {name: $rg_name, subscription_id: $sub_id, tenant_id: $tenant_id})
         MERGE (v:VirtualMachine {id: $id})
         SET v.name = $name,
             v.os_type = $os_type,
@@ -186,7 +185,7 @@ def _ingest_mi(
 ) -> None:
     conn.run_in_tx(
         """
-        MATCH (rg:ResourceGroup {name: $rg_name, tenant_id: $tenant_id})
+        MATCH (rg:ResourceGroup {name: $rg_name, subscription_id: $sub_id, tenant_id: $tenant_id})
         MERGE (m:UserAssignedIdentity {id: $id})
         SET m.name = $name,
             m.principal_id = $principal_id,
@@ -212,16 +211,18 @@ def _ingest_sp(
     conn: Neo4jConnection,
     sp: ServicePrincipalInfo,
     rg_name: str,
+    sub_id: str,
     tenant_id: str,
 ) -> None:
     conn.run_in_tx(
         """
-        MATCH (rg:ResourceGroup {name: $rg_name, tenant_id: $tenant_id})
+        MATCH (rg:ResourceGroup {name: $rg_name, subscription_id: $sub_id, tenant_id: $tenant_id})
         MERGE (sp:ServicePrincipal {principal_id: $pid})
         SET sp.display_name = $display_name,
             sp.app_id = $app_id,
             sp.roles = $roles,
             sp.tenant_id = $tenant_id,
+            sp.subscription_id = $sub_id,
             sp.resource_group = $rg_name
         MERGE (sp)-[:HAS_ROLE_IN]->(rg)
         """,
@@ -231,6 +232,7 @@ def _ingest_sp(
             "app_id": sp.app_id,
             "roles": _sanitize(sp.roles),
             "tenant_id": tenant_id,
+            "sub_id": sub_id,
             "rg_name": rg_name,
         },
     )
@@ -240,7 +242,7 @@ def ingest_azurehound(
     conn: Neo4jConnection,
     filepath: str | Path,
     tenant_id: str = "default",
-) -> dict[str, int]:
+) -> dict[str, int | str]:
     filepath = Path(filepath)
     if not filepath.exists():
         log.error("AzureHound output not found: %s", filepath)
@@ -284,7 +286,7 @@ def ingest_azurehound(
 
 def _ingest_ah_node(conn: Neo4jConnection, label: str, props: dict[str, Any]) -> None:
     oid = props.get("objectid") or props.get("id", "unknown")
-    safe_label = label.replace("-", "_").replace(" ", "_")
+    safe_label = label.replace("-", "_").replace(" ", "_").replace("`", "_")
     set_clause = ", ".join(f"n.{k} = ${k}" for k in props if k != "objectid")
     conn.run_in_tx(
         f"MERGE (n:`{safe_label}` {{objectid: $oid}}) SET {set_clause}",
