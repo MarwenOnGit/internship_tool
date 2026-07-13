@@ -124,6 +124,7 @@ def _ingest_resource(
             res.can_write = $can_write,
             res.can_act = $can_act,
             res.effective_actions = $actions,
+            res.access_policies = $access_policies,
             res.tenant_id = $tenant_id,
             res.subscription_id = $sub_id,
             res.resource_group = $rg_name
@@ -138,6 +139,7 @@ def _ingest_resource(
             "can_write": r.user_can_write,
             "can_act": r.user_can_act,
             "actions": _sanitize(r.effective_actions),
+            "access_policies": _sanitize(r.access_policies),
             "tenant_id": tenant_id,
             "sub_id": sub_id,
             "rg_name": rg_name,
