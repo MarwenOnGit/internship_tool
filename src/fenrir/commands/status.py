@@ -6,7 +6,7 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from azauth.core.authenticator import AzureAuthenticator, Credentials
+from fenrir.core.authenticator import AzureAuthenticator, Credentials
 
 console = Console(stderr=True)
 
@@ -52,7 +52,7 @@ def status(
 
     if not accounts:
         console.print("[yellow]No cached accounts found[/yellow]")
-        console.print("Run [bold]azauth login[/bold] to sign in.")
+        console.print("Run [bold]fenrir login[/bold] to sign in.")
         return
 
     table = Table(title="Cached Accounts")

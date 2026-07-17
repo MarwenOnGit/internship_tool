@@ -2,14 +2,15 @@ from pathlib import Path
 
 import typer
 
-from azauth.commands import login, logout, status, token
-from azauth.commands import enumerate as enumerate_cmd_mod
-from azauth.commands import pipeline as pipeline_mod
-from azauth.commands import exploit as exploit_mod
-from azauth.commands import db as db_mod
+from fenrir.commands import login, logout, status, token
+from fenrir.commands import enumerate as enumerate_cmd_mod
+from fenrir.commands import pipeline as pipeline_mod
+from fenrir.commands import exploit as exploit_mod
+from fenrir.commands import db as db_mod
+from fenrir.commands import consent as consent_mod
 
 app = typer.Typer(
-    name="azauth",
+    name="fenrir",
     help="Azure CLI authenticator — email/password login with automatic MFA fallback.",
     no_args_is_help=True,
 )
@@ -28,16 +29,17 @@ app.command(
     help="Discover Azure resources, check RBAC, and extract managed identity tokens.",
 )(exploit_mod.exploit)
 app.add_typer(db_mod.db_app)
+app.add_typer(consent_mod.CONSENT_APP)
 
 
 def _version_callback(value: bool) -> None:
     if value:
         from importlib.metadata import version
         try:
-            ver = version("azauth")
+            ver = version("fenrir")
         except Exception:
             ver = "0.1.0 (dev)"
-        typer.echo(f"azauth {ver}")
+        typer.echo(f"fenrir {ver}")
         raise typer.Exit()
 
 

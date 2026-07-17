@@ -14,7 +14,7 @@ log = logging.getLogger(__name__)
 
 DEFAULT_SCOPES = ["https://graph.microsoft.com/.default"]
 DEFAULT_AUTHORITY = "https://login.microsoftonline.com/common"
-TOKEN_CACHE_DIR = Path.home() / ".config" / "azauth"
+TOKEN_CACHE_DIR = Path.home() / ".config" / "fenrir"
 TOKEN_CACHE_FILE = TOKEN_CACHE_DIR / "token_cache.bin"
 
 AuthFlow = Literal["device-code", "interactive", "ropc"]

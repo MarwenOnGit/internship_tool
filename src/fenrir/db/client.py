@@ -9,7 +9,7 @@ log = logging.getLogger(__name__)
 
 DEFAULT_URI = "bolt://localhost:7687"
 DEFAULT_USER = "neo4j"
-DEFAULT_PASSWORD = "azauth_neo4j"
+DEFAULT_PASSWORD = "fenrir_neo4j"
 
 
 class Neo4jConnection:

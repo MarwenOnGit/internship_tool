@@ -5,8 +5,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
 
-from azauth.core.authenticator import AzureAuthenticator
-from azauth.core.enumerate.models import (
+from fenrir.core.authenticator import AzureAuthenticator
+from fenrir.core.enumerate.models import (
     DirectoryRole,
     DirectoryRoleAssignment,
     Domain,

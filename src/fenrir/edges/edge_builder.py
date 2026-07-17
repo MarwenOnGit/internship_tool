@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any
 
-from azauth.enumeration.app_graph_enum import (
+from fenrir.enumeration.app_graph_enum import (
     AppInfo,
     CredentialInfo,
     FederatedCredentialInfo,

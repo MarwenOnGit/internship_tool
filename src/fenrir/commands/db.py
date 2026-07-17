@@ -7,8 +7,8 @@ from pathlib import Path
 import typer
 from rich.console import Console
 
-from azauth.db.client import Neo4jConnection
-from azauth.db.docker import (
+from fenrir.db.client import Neo4jConnection
+from fenrir.db.docker import (
     get_container_status,
     get_connection_params,
     is_container_running,
@@ -16,8 +16,8 @@ from azauth.db.docker import (
     stop_container,
     wait_for_ready,
 )
-from azauth.db.schema import ensure_schema
-from azauth.exploit.orchestrator import ExploitResult
+from fenrir.db.schema import ensure_schema
+from fenrir.exploit.orchestrator import ExploitResult
 
 log = logging.getLogger(__name__)
 console = Console(stderr=True)
@@ -38,17 +38,17 @@ def _get_db_connection() -> Neo4jConnection | None:
         return conn
     except Exception as e:
         console.print(f"[red]Failed to connect to Neo4j:[/red] {e}")
-        console.print("[yellow]Run 'azauth db up' first[/yellow]")
+        console.print("[yellow]Run 'fenrir db up' first[/yellow]")
         return None
 
 
 @db_app.command(name="up")
 def db_up(
-    password: str = typer.Option("azauth_neo4j", "--password", "-p", help="Neo4j password"),
+    password: str = typer.Option("fenrir_neo4j", "--password", "-p", help="Neo4j password"),
     wait: int = typer.Option(60, "--wait", "-w", help="Seconds to wait for Neo4j to be ready"),
 ):
     """Start Neo4j Docker container."""
-    from azauth.db.docker import is_docker_available
+    from fenrir.db.docker import is_docker_available
     if not is_docker_available():
         console.print("[red]Docker is not available. Install Docker to use the Neo4j database.[/red]")
         raise typer.Exit(code=1)
@@ -95,18 +95,18 @@ def db_status():
         console.print("[green]Neo4j is running[/green]")
     else:
         console.print(f"[yellow]Neo4j status:[/yellow] {status}")
-    console.print(f"  Container: azauth-neo4j")
+    console.print(f"  Container: fenrir-neo4j")
     console.print(f"  Status:    {status}")
 
 
 @db_app.command(name="reset")
 def db_reset():
     """Stop and remove the Neo4j container + data volume."""
-    from azauth.db.docker import remove_container
+    from fenrir.db.docker import remove_container
     stop_container()
     remove_container()
     console.print("[green]Container removed[/green]")
-    console.print("[yellow]Run 'azauth db up' to create a fresh instance[/yellow]")
+    console.print("[yellow]Run 'fenrir db up' to create a fresh instance[/yellow]")
 
 
 @db_app.command(name="ingest")
@@ -119,7 +119,7 @@ def db_ingest(
     if not conn:
         raise typer.Exit(code=1)
 
-    from azauth.db.ingest import ingest_azurehound
+    from fenrir.db.ingest import ingest_azurehound
 
     if azurehound:
         console.print(f"[cyan]Ingesting AzureHound data from[/cyan] {azurehound}")

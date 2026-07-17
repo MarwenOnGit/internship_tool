@@ -6,16 +6,16 @@ from pathlib import Path
 
 import typer
 
-from azauth.bloodhound.client import BloodHoundClient, BloodHoundConfig
-from azauth.collectors.azurehound_runner import (
+from fenrir.bloodhound.client import BloodHoundClient, BloodHoundConfig
+from fenrir.collectors.azurehound_runner import (
     AzureHoundConfig,
     AzureHoundError,
     run_azurehound,
 )
-from azauth.core.authenticator import AzureAuthenticator, Credentials
-from azauth.edges.edge_builder import build_all_edges
-from azauth.edges.neo4j_writer import Neo4jWriter
-from azauth.enumeration.app_graph_enum import run_graph_enumeration
+from fenrir.core.authenticator import AzureAuthenticator, Credentials
+from fenrir.edges.edge_builder import build_all_edges
+from fenrir.edges.neo4j_writer import Neo4jWriter
+from fenrir.enumeration.app_graph_enum import run_graph_enumeration
 
 log = logging.getLogger(__name__)
 
@@ -45,11 +45,11 @@ def pipeline(
         None, "--azurehound-path", envvar="AZUREHOUND_PATH",
         help="Path to AzureHound binary",
     ),
-    azauth_client_id: str = typer.Option(
+    fenrir_client_id: str = typer.Option(
         None, "--client-id", envvar="AZAUTH_CLIENT_ID",
         help="Azure AD app client ID for AzureHound (app-only mode)",
     ),
-    azauth_client_secret: str = typer.Option(
+    fenrir_client_secret: str = typer.Option(
         None, "--client-secret", envvar="AZAUTH_CLIENT_SECRET",
         help="Azure AD app client secret (app-only mode)",
     ),
@@ -76,13 +76,13 @@ def pipeline(
 
     azh_config = AzureHoundConfig(
         binary=azurehound_path or "azurehound",
-        client_id=azauth_client_id,
-        client_secret=azauth_client_secret,
+        client_id=fenrir_client_id,
+        client_secret=fenrir_client_secret,
         tenant_id=tenant_id,
         output_dir=output_dir or str(Path.cwd()),
     )
 
-    if azauth_client_id and azauth_client_secret:
+    if fenrir_client_id and fenrir_client_secret:
         log.info("Using app-only auth for AzureHound")
     else:
         log.info("Acquiring delegated token for AzureHound")
@@ -94,7 +94,7 @@ def pipeline(
         if refresh_token:
             azh_config.refresh_token = refresh_token
             log.info("Using refresh token for AzureHound")
-        elif azauth_client_id and azauth_client_secret:
+        elif fenrir_client_id and fenrir_client_secret:
             pass
         else:
             typer.secho(

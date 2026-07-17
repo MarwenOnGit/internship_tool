@@ -5,7 +5,7 @@ import sys
 import typer
 from rich.console import Console
 
-from azauth.core.authenticator import AzureAuthenticator, Credentials
+from fenrir.core.authenticator import AzureAuthenticator, Credentials
 
 err_console = Console(stderr=True)
 
@@ -31,7 +31,7 @@ def token_cmd(
     the original login consented to — no re-authentication required.
     """
     import os
-    from azauth.core.authenticator import Credentials as C
+    from fenrir.core.authenticator import Credentials as C
     from pathlib import Path
 
     resolved_scopes = (
