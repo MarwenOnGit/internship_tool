@@ -34,3 +34,8 @@ Thumbs.db
 # AzureHound binary
 azurehound
 *.zip
+
+# External tools
+tools/pynauth/
+tools/pynauth_config.json
+tokenLibrary.pickle
