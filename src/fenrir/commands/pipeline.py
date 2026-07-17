@@ -46,15 +46,15 @@ def pipeline(
         help="Path to AzureHound binary",
     ),
     fenrir_client_id: str = typer.Option(
-        None, "--client-id", envvar="AZAUTH_CLIENT_ID",
+        None, "--client-id", envvar="FENRIR_CLIENT_ID",
         help="Azure AD app client ID for AzureHound (app-only mode)",
     ),
     fenrir_client_secret: str = typer.Option(
-        None, "--client-secret", envvar="AZAUTH_CLIENT_SECRET",
+        None, "--client-secret", envvar="FENRIR_CLIENT_SECRET",
         help="Azure AD app client secret (app-only mode)",
     ),
     tenant_id: str = typer.Option(
-        None, "--tenant-id", envvar="AZAUTH_TENANT_ID",
+        None, "--tenant-id", envvar="FENRIR_TENANT_ID",
         help="Tenant ID for app-only auth",
     ),
     output_dir: str = typer.Option(

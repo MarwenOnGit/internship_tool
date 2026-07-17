@@ -29,12 +29,12 @@ def _resolve_creds(
     auth_flow: str | None,
     token_cache: Path | None,
 ) -> Credentials:
-    u = username or os.environ.get("AZAUTH_USERNAME")
-    p = password or os.environ.get("AZAUTH_PASSWORD")
-    t = tenant or os.environ.get("AZAUTH_TENANT")
-    c = client_id or os.environ.get("AZAUTH_CLIENT_ID")
-    s = scopes or os.environ.get("AZAUTH_SCOPES", "https://graph.microsoft.com/.default")
-    f = auth_flow or os.environ.get("AZAUTH_AUTH_FLOW", "device-code")
+    u = username or os.environ.get("FENRIR_USERNAME") or os.environ.get("AZAUTH_USERNAME")
+    p = password or os.environ.get("FENRIR_PASSWORD") or os.environ.get("AZAUTH_PASSWORD")
+    t = tenant or os.environ.get("FENRIR_TENANT") or os.environ.get("AZAUTH_TENANT")
+    c = client_id or os.environ.get("FENRIR_CLIENT_ID") or os.environ.get("AZAUTH_CLIENT_ID")
+    s = scopes or os.environ.get("FENRIR_SCOPES") or os.environ.get("AZAUTH_SCOPES", "https://graph.microsoft.com/.default")
+    f = auth_flow or os.environ.get("FENRIR_AUTH_FLOW") or os.environ.get("AZAUTH_AUTH_FLOW", "device-code")
     tc = token_cache or (TOKEN_CACHE_DIR / "token_cache.bin")
 
     if password_file:
@@ -64,12 +64,12 @@ def _resolve_creds(
 def login(
     ctx: typer.Context,
     username: str = typer.Option(
-        None, "--username", "-u", help="Azure username / email", show_envvar="AZAUTH_USERNAME",
+        None, "--username", "-u", help="Azure username / email", show_envvar="FENRIR_USERNAME",
     ),
     password: str = typer.Option(
         None, "--password", "-p",
         help="Password (only needed for --auth-flow ropc)",
-        show_envvar="AZAUTH_PASSWORD",
+        show_envvar="FENRIR_PASSWORD",
     ),
     password_file: Path = typer.Option(
         None, "--password-file", "--pf",
@@ -78,20 +78,20 @@ def login(
     ),
     tenant: str = typer.Option(
         None, "--tenant", "-t", help="Tenant ID or domain name",
-        show_envvar="AZAUTH_TENANT",
+        show_envvar="FENRIR_TENANT",
     ),
     client_id: str = typer.Option(
         None, "--client-id", help="Azure app registration client ID",
-        show_envvar="AZAUTH_CLIENT_ID",
+        show_envvar="FENRIR_CLIENT_ID",
     ),
     scopes: str = typer.Option(
         None, "--scopes", help="Comma-separated scopes (default: https://graph.microsoft.com/.default)",
-        show_envvar="AZAUTH_SCOPES",
+        show_envvar="FENRIR_SCOPES",
     ),
     auth_flow: str = typer.Option(
         None, "--auth-flow",
         help="Auth flow: device-code (default), interactive (needs --client-id), ropc",
-        show_envvar="AZAUTH_AUTH_FLOW",
+        show_envvar="FENRIR_AUTH_FLOW",
     ),
     token_cache: Path = typer.Option(
         None, "--token-cache",

@@ -21,7 +21,7 @@ def token_cmd(
     scopes: str = typer.Option(
         None, "--scopes",
         help="Comma-separated scopes (default: uses scopes from login)",
-        show_envvar="AZAUTH_SCOPES",
+        show_envvar="FENRIR_SCOPES",
     ),
     token_cache: str = typer.Option(None, "--token-cache"),
 ):
@@ -35,13 +35,13 @@ def token_cmd(
     from pathlib import Path
 
     resolved_scopes = (
-        scopes or os.environ.get("AZAUTH_SCOPES")
+        scopes or os.environ.get("FENRIR_SCOPES") or os.environ.get("AZAUTH_SCOPES", "https://graph.microsoft.com/.default")
     )
 
     creds = C(
-        username=username or os.environ.get("AZAUTH_USERNAME"),
-        tenant=tenant or os.environ.get("AZAUTH_TENANT"),
-        client_id=client_id or os.environ.get("AZAUTH_CLIENT_ID"),
+        username=username or os.environ.get("FENRIR_USERNAME") or os.environ.get("AZAUTH_USERNAME"),
+        tenant=tenant or os.environ.get("FENRIR_TENANT") or os.environ.get("AZAUTH_TENANT"),
+        client_id=client_id or os.environ.get("FENRIR_CLIENT_ID") or os.environ.get("AZAUTH_CLIENT_ID"),
         scopes=[s.strip() for s in resolved_scopes.split(",")] if resolved_scopes else None,
     )
     if token_cache:

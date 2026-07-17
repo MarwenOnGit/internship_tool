@@ -15,6 +15,7 @@ build/
 coverage/
 
 # Token cache (secrets)
+~/.config/fenrir/
 ~/.config/azauth/
 
 # IDE

@@ -82,7 +82,7 @@ class AzureAuthenticator:
 
     @staticmethod
     def _default_client_id() -> str:
-        return os.environ.get("AZAUTH_CLIENT_ID", "04b07795-8ddb-461a-bbee-02f9e1bf7b46")
+        return os.environ.get("FENRIR_CLIENT_ID") or os.environ.get("AZAUTH_CLIENT_ID", "04b07795-8ddb-461a-bbee-02f9e1bf7b46")
 
     def _try_silent(self) -> AuthResult:
         accounts = self.app.get_accounts()
@@ -95,6 +95,7 @@ class AzureAuthenticator:
             )
             if result and "access_token" in result:
                 self._cached_account = account
+                self.save_token_cache()
                 return AuthResult(
                     success=True,
                     token=result,
