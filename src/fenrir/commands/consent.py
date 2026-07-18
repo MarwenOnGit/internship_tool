@@ -12,7 +12,6 @@ import urllib.request
 from pathlib import Path
 from typing import Optional
 
-import requests
 import typer
 from rich.console import Console
 
@@ -205,11 +204,11 @@ def _wait_for_tokens(proc: subprocess.Popen, token_dir: Path):
 # Graph API helpers (auto mode)
 # ---------------------------------------------------------------------------
 
-def _graph_device_auth(scopes: list[str]) -> dict:
+def _graph_device_auth(scopes: list[str], tenant: str = "organizations") -> dict:
     import msal
     app = msal.PublicClientApplication(
         AZURE_CLI_CLIENT_ID,
-        authority="https://login.microsoftonline.com/organizations",
+        authority=f"https://login.microsoftonline.com/{tenant}",
     )
     flow = app.initiate_device_flow(scopes=scopes)
     if "user_code" not in flow:
@@ -224,125 +223,116 @@ def _graph_device_auth(scopes: list[str]) -> dict:
     return result
 
 
-def _graph_get(access_token: str, path: str) -> dict:
-    resp = requests.get(
-        f"{GRAPH_BASE}{path}",
-        headers={"Authorization": f"Bearer {access_token}",
-                 "Content-Type": "application/json"},
+def _try_graph_device_auth(scopes: list[str], tenant: str = "organizations") -> dict | None:
+    """Attempt device code auth; return None on AADSTS65002 (needs admin consent)."""
+    import msal
+    app = msal.PublicClientApplication(
+        AZURE_CLI_CLIENT_ID,
+        authority=f"https://login.microsoftonline.com/{tenant}",
     )
-    if resp.status_code >= 400:
-        console.print(f"[red]Graph GET {path} failed ({resp.status_code}): {resp.text}[/red]")
-        resp.raise_for_status()
-    return resp.json()
+    flow = app.initiate_device_flow(scopes=scopes)
+    if "user_code" not in flow:
+        console.print(f"[red]Device flow init failed: {flow}[/red]")
+        raise typer.Exit(1)
+    console.print(f"[yellow]{flow['message']}[/yellow]")
+    result = app.acquire_token_by_device_flow(flow)
+    if "access_token" in result:
+        console.print("[green]✓ Authenticated to Graph API[/green]")
+        return result
+    err = result.get("error_description", "")
+    if "65002" in err:
+        return None
+    console.print(f"[red]Auth failed: {err}[/red]")
+    raise typer.Exit(1)
 
 
-def _graph_post(access_token: str, path: str, body: dict) -> dict:
-    resp = requests.post(
-        f"{GRAPH_BASE}{path}",
-        headers={"Authorization": f"Bearer {access_token}",
-                 "Content-Type": "application/json"},
-        json=body,
-    )
-    if resp.status_code >= 400:
-        console.print(f"[red]Graph POST {path} failed ({resp.status_code}): {resp.text}[/red]")
-        resp.raise_for_status()
-    return resp.json()
+# ---------------------------------------------------------------------------
+# Azure CLI helpers (auto mode)
+# ---------------------------------------------------------------------------
+
+def _run_az(args: list[str], fail_ok: bool = False) -> subprocess.CompletedProcess:
+    """Run an Azure CLI command and return the CompletedProcess."""
+    cmd = ["az"] + args
+    log.debug("Running: %s", " ".join(cmd))
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+    except FileNotFoundError:
+        if not fail_ok:
+            console.print("[red]Azure CLI (az) not found. Install it from https://aka.ms/installazurecli[/red]")
+            raise typer.Exit(code=3)
+        return subprocess.CompletedProcess(cmd, -1, "", "")
+    if r.returncode != 0 and not fail_ok:
+        console.print(f"[red]Azure CLI command failed:[/red] {r.stderr.strip()}")
+        raise typer.Exit(code=r.returncode)
+    return r
 
 
-def _graph_patch(access_token: str, path: str, body: dict) -> dict:
-    resp = requests.patch(
-        f"{GRAPH_BASE}{path}",
-        headers={"Authorization": f"Bearer {access_token}",
-                 "Content-Type": "application/json"},
-        json=body,
-    )
-    if resp.status_code >= 400:
-        console.print(f"[red]Graph PATCH {path} failed ({resp.status_code}): {resp.text}[/red]")
-        resp.raise_for_status()
-    return {} if resp.status_code == 204 else resp.json()
+def _az_check_logged_in() -> bool:
+    r = _run_az(["account", "show"], fail_ok=True)
+    return r.returncode == 0
 
 
-def _check_can_register_apps(access_token: str) -> bool:
-    data = _graph_get(access_token, "/policies/authorizationPolicy")
-    allowed = (data.get("defaultUserRolePermissions") or {}).get("allowedToCreateApps", False)
-    console.print(
-        f"  {'[green]✓' if allowed else '[red]✗'} "
-        f"Users can register applications: {allowed}"
-    )
-    return allowed
-
-
-def _register_app(access_token: str, display_name: str, redirect_uri: str) -> tuple[str, str]:
-    body = {
-        "displayName": display_name,
-        "signInAudience": "AzureADMultipleOrgs",
-        "publicClient": {
-            "redirectUris": [redirect_uri],
-        },
-    }
-    data = _graph_post(access_token, "/applications", body)
+def _az_create_app(display_name: str, redirect_uri: str) -> tuple[str, str, str]:
+    """Create an app via Azure CLI; returns (app_id, object_id, tenant)."""
+    r = _run_az([
+        "ad", "app", "create",
+        "--display-name", display_name,
+        "--sign-in-audience", "AzureADMultipleOrgs",
+        "--public-client-redirect-uris", redirect_uri,
+        "--only-show-errors",
+    ])
+    data = json.loads(r.stdout)
     app_id = data["appId"]
     obj_id = data["id"]
     console.print(f"[green]✓ App registered:[/green] {display_name} (appId={app_id})")
     return app_id, obj_id
 
 
-def _add_permissions(access_token: str, app_obj_id: str, scopes: list[str]):
-    resource_access = []
-    for s in scopes:
-        sid = GRAPH_SCOPE_IDS.get(s)
-        if sid:
-            resource_access.append({"id": sid, "type": "Scope"})
-        else:
-            console.print(f"  [yellow]⚠ Unknown scope ID for {s}, skipping[/yellow]")
-
-    body = {
-        "requiredResourceAccess": [
-            {
-                "resourceAppId": GRAPH_RESOURCE_ID,
-                "resourceAccess": resource_access,
-            }
-        ]
-    }
-    _graph_patch(access_token, f"/applications/{app_obj_id}", body)
-    console.print(f"[green]✓ Added {len(resource_access)} delegated permission(s)[/green]")
+def _az_add_delegated_permissions(app_id: str, scopes: list[str]):
+    scope_ids = [GRAPH_SCOPE_IDS[s] for s in scopes if s in GRAPH_SCOPE_IDS]
+    if not scope_ids:
+        return
+    perms = " ".join(f"{sid}=Scope" for sid in scope_ids)
+    _run_az([
+        "ad", "app", "permission", "add",
+        "--id", app_id,
+        "--api", GRAPH_RESOURCE_ID,
+        "--api-permissions", perms,
+        "--only-show-errors",
+    ])
+    console.print(f"[green]✓ Added {len(scope_ids)} delegated permission(s)[/green]")
 
 
-def _add_client_secret(access_token: str, app_obj_id: str, label: str) -> str:
-    from datetime import datetime, timedelta
-    end = (datetime.utcnow() + timedelta(days=365)).strftime("%Y-%m-%dT%H:%M:%SZ")
-    body = {
-        "passwordCredential": {
-            "displayName": label,
-            "endDateTime": end,
-        }
-    }
-    data = _graph_post(access_token, f"/applications/{app_obj_id}/addPassword", body)
-    secret = data["secretText"]
+def _az_add_client_secret(app_id: str, label: str) -> str:
+    r = _run_az([
+        "ad", "app", "credential", "reset",
+        "--id", app_id,
+        "--display-name", label,
+        "--only-show-errors",
+    ])
+    data = json.loads(r.stdout)
+    secret = data["passwordText"]
     console.print("[green]✓ Client secret generated[/green]")
     return secret
 
 
-def _update_redirect_uri(access_token: str, app_obj_id: str, redirect_uri: str):
-    body = {
-        "publicClient": {
-            "redirectUris": [redirect_uri],
-        },
-    }
-    _graph_patch(access_token, f"/applications/{app_obj_id}", body)
+def _az_update_redirect_uri(app_id: str, redirect_uri: str):
+    _run_az([
+        "ad", "app", "update",
+        "--id", app_id,
+        "--public-client-redirect-uris", redirect_uri,
+        "--only-show-errors",
+    ])
     console.print(f"[green]✓ Redirect URI updated:[/green] {redirect_uri}")
 
 
-def _check_app_permissions(access_token: str, app_obj_id: str):
-    data = _graph_get(access_token, f"/applications/{app_obj_id}")
+def _az_show_app(app_id: str):
+    r = _run_az(["ad", "app", "show", "--id", app_id, "--only-show-errors"])
+    data = json.loads(r.stdout)
     console.print(f"[cyan]  App object ID:[/cyan] {data.get('id')}")
     console.print(f"[cyan]  App ID:[/cyan] {data.get('appId')}")
     console.print(f"[cyan]  Sign-in audience:[/cyan] {data.get('signInAudience')}")
 
-
-# ---------------------------------------------------------------------------
-# Auto-mode orchestrator
-# ---------------------------------------------------------------------------
 
 def _auto_flow(
     tenant: str,
@@ -354,22 +344,23 @@ def _auto_flow(
     scope_list = (scopes_override or " ".join(HIGH_PRIV_SCOPES)).split()
     high_priv = [s for s in scope_list if s in GRAPH_SCOPE_IDS]
 
-    graph_scopes = ["https://graph.microsoft.com/User.Read",
-                    "https://graph.microsoft.com/Application.ReadWrite.All",
-                    "https://graph.microsoft.com/Directory.Read.All"]
+    console.print("[bold]▶ Checking Azure CLI availability[/bold]")
+    if not _az_check_logged_in():
+        console.print()
+        console.print("[yellow]Azure CLI is required for auto-provisioning.[/yellow]")
+        console.print()
+        console.print("  [bold]Install & log in first:[/bold]")
+        console.print("    curl -sL https://aka.ms/InstallAzureCli | bash")
+        console.print("    az login --allow-no-subscriptions")
+        console.print()
+        console.print("  [bold]Then re-run:[/bold] fenrir consent --auto [options]")
+        console.print()
+        raise typer.Exit(code=3)
 
-    console.print("[bold]▶ Step 1: Authenticate to Graph API[/bold]")
-    token = _graph_device_auth(graph_scopes)
-    access_token = token["access_token"]
+    console.print("[green]✓ Azure CLI is available and logged in[/green]")
+    console.print()
 
-    console.print("[bold]▶ Step 2: Check if users can register applications[/bold]")
-    if not _check_can_register_apps(access_token):
-        console.print("[red]✗ Users cannot register applications in this tenant.[/red]")
-        console.print("[yellow]  Auto mode requires this setting to be enabled.[/yellow]")
-        console.print("[yellow]  Either enable it in the Entra admin center or use manual mode.[/yellow]")
-        raise typer.Exit(code=10)
-
-    console.print("[bold]▶ Step 3: Start tunnel[/bold]")
+    console.print("[bold]▶ Step 1: Start tunnel[/bold]")
     tunnel_url = None
     if tunnel_service == "ngrok":
         tunnel_url = _start_ngrok(port)
@@ -386,20 +377,17 @@ def _auto_flow(
     local_redirect = f"http://localhost:{port}/getAToken"
     final_redirect = f"{tunnel_url}/getAToken" if tunnel_url else local_redirect
 
-    console.print("[bold]▶ Step 4: Register application[/bold]")
-    app_id, obj_id = _register_app(access_token, app_name, local_redirect)
+    console.print("[bold]▶ Step 2: Register application via Azure CLI[/bold]")
+    app_id, obj_id = _az_create_app(app_name, final_redirect)
 
-    console.print("[bold]▶ Step 5: Add delegated API permissions[/bold]")
-    _add_permissions(access_token, obj_id, high_priv)
+    console.print("[bold]▶ Step 3: Add delegated API permissions[/bold]")
+    _az_add_delegated_permissions(app_id, high_priv)
 
-    console.print("[bold]▶ Step 6: Generate client secret[/bold]")
-    app_secret = _add_client_secret(access_token, obj_id, "fenrir-auto-secret")
+    console.print("[bold]▶ Step 4: Generate client secret[/bold]")
+    app_secret = _az_add_client_secret(app_id, "fenrir-auto-secret")
 
-    if tunnel_url:
-        console.print("[bold]▶ Step 7: Update redirect URI with tunnel URL[/bold]")
-        _update_redirect_uri(access_token, obj_id, final_redirect)
-
-    _check_app_permissions(access_token, obj_id)
+    console.print("[bold]▶ Step 5: Review registered app[/bold]")
+    _az_show_app(app_id)
 
     console.print()
     console.print("=" * 60)
