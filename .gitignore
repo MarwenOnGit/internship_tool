@@ -15,7 +15,7 @@ build/
 coverage/
 
 # Token cache (secrets)
-~/.config/azauth/
+~/.config/fenrir/
 
 # IDE
 .vscode/
@@ -34,3 +34,20 @@ Thumbs.db
 # AzureHound binary
 azurehound
 *.zip
+
+# Tooling / third-party utilities
+tools/
+
+# Architecture diagrams (local)
+*.drawio
+
+# Coverage reports
+.coverage
+htmlcov/
+coverage/
+
+# Logs
+*.log
+
+# OS artifacts
+*~

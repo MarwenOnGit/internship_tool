@@ -4,7 +4,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from azauth.collectors.azurehound_runner import (
+from fenrir.collectors.azurehound_runner import (
     AzureHoundConfig,
     AzureHoundError,
     AzureHoundResult,

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 
-from azauth.db.client import Neo4jConnection
+from fenrir.db.client import Neo4jConnection
 
 log = logging.getLogger(__name__)
 

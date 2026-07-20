@@ -5,8 +5,8 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from azauth.db.client import Neo4jConnection
-from azauth.exploit.arm_enum import (
+from fenrir.db.client import Neo4jConnection
+from fenrir.exploit.arm_enum import (
     ResourceInRG,
     ServicePrincipalInfo,
     Subscription,

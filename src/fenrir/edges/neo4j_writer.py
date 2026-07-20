@@ -3,8 +3,8 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from azauth.bloodhound.client import BloodHoundClient, BloodHoundError, CypherResult
-from azauth.edges.edge_builder import EdgeDescriptor
+from fenrir.bloodhound.client import BloodHoundClient, BloodHoundError, CypherResult
+from fenrir.edges.edge_builder import EdgeDescriptor
 
 log = logging.getLogger(__name__)
 

@@ -1,6 +1,6 @@
 from dataclasses import replace
 
-from azauth.edges.edge_builder import (
+from fenrir.edges.edge_builder import (
     build_all_edges,
     build_az_expired_credential_edges,
     build_az_federated_credential_edges,
@@ -8,7 +8,7 @@ from azauth.edges.edge_builder import (
     build_az_oauth2_permission_grant_edges,
     build_az_owns_edges,
 )
-from azauth.enumeration.app_graph_enum import (
+from fenrir.enumeration.app_graph_enum import (
     AppInfo,
     CredentialInfo,
     FederatedCredentialInfo,

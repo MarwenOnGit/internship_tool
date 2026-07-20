@@ -3,7 +3,7 @@ from __future__ import annotations
 import typer
 from rich.console import Console
 
-from azauth.core.authenticator import AzureAuthenticator, Credentials
+from fenrir.core.authenticator import AzureAuthenticator, Credentials
 
 console = Console(stderr=True)
 

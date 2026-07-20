@@ -2,7 +2,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from azauth.bloodhound.client import BloodHoundClient, BloodHoundConfig
+from fenrir.bloodhound.client import BloodHoundClient, BloodHoundConfig
 
 
 @pytest.fixture

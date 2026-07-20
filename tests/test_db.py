@@ -2,9 +2,9 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from azauth.db.client import Neo4jConnection
-from azauth.db.schema import ensure_schema
-from azauth.exploit.arm_enum import (
+from fenrir.db.client import Neo4jConnection
+from fenrir.db.schema import ensure_schema
+from fenrir.exploit.arm_enum import (
     ResourceInRG,
     ServicePrincipalInfo,
     Subscription,
@@ -15,7 +15,7 @@ from azauth.exploit.arm_enum import (
 
 @pytest.fixture
 def mock_driver():
-    with patch("azauth.db.client.GraphDatabase.driver") as md:
+    with patch("fenrir.db.client.GraphDatabase.driver") as md:
         driver = Mock()
         md.return_value = driver
         session = Mock()
@@ -65,7 +65,7 @@ def test_ensure_schema(mock_driver):
 
 
 def test_ingest_exploit_result(mock_driver):
-    from azauth.db.ingest import ingest_exploit_result
+    from fenrir.db.ingest import ingest_exploit_result
 
     sub = Subscription(
         id="/subscriptions/sub-1", subscription_id="sub-1",
@@ -123,7 +123,7 @@ def test_ingest_exploit_result(mock_driver):
 
 
 def test_ingest_azurehound(mock_driver):
-    from azauth.db.ingest import ingest_azurehound
+    from fenrir.db.ingest import ingest_azurehound
     import json
     import tempfile
     from pathlib import Path
@@ -158,7 +158,7 @@ def test_ingest_azurehound(mock_driver):
 
 
 def test_ingest_azurehound_file_not_found(mock_driver):
-    from azauth.db.ingest import ingest_azurehound
+    from fenrir.db.ingest import ingest_azurehound
     conn = Neo4jConnection("bolt://localhost:7687", "neo4j", "pass")
     conn.connect()
     result = ingest_azurehound(conn, "/nonexistent/file.json")
@@ -166,13 +166,13 @@ def test_ingest_azurehound_file_not_found(mock_driver):
 
 
 def test_docker_status():
-    from azauth.db.docker import get_container_status, is_container_running
+    from fenrir.db.docker import get_container_status, is_container_running
     status = get_container_status()
     assert isinstance(status, str)
 
 
 def test_connection_params():
-    from azauth.db.docker import get_connection_params
+    from fenrir.db.docker import get_connection_params
     params = get_connection_params()
     assert "uri" in params
     assert "user" in params

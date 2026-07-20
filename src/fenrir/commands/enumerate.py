@@ -10,9 +10,9 @@ from rich.table import Table
 from rich.text import Text
 from rich.tree import Tree
 
-from azauth.core.authenticator import AzureAuthenticator, Credentials
-from azauth.core.enumerate.collector import EnumerateCollector
-from azauth.core.enumerate.models import EnumerationResult
+from fenrir.core.authenticator import AzureAuthenticator, Credentials
+from fenrir.core.enumerate.collector import EnumerateCollector
+from fenrir.core.enumerate.models import EnumerationResult
 
 log = logging.getLogger(__name__)
 console = Console(stderr=True)
@@ -209,7 +209,7 @@ def enumerate_cmd(
     # Quick auth check first
     auth_result = authenticator.get_token()
     if not auth_result.success:
-        console.print("[red]Not authenticated. Run[/red] azauth login [red]first.[/red]")
+        console.print("[red]Not authenticated. Run[/red] fenrir login [red]first.[/red]")
         raise typer.Exit(code=3)
 
     from rich.progress import (

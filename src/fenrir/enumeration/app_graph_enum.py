@@ -6,7 +6,7 @@ from typing import Any
 
 import requests
 
-from azauth.core.authenticator import AzureAuthenticator
+from fenrir.core.authenticator import AzureAuthenticator
 
 log = logging.getLogger(__name__)
 

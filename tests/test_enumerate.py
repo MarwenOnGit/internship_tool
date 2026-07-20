@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch, PropertyMock
 
 from typer.testing import CliRunner
 
-from azauth.cli import app
+from fenrir.cli import app
 
 runner = CliRunner()
 
@@ -15,7 +15,7 @@ def test_enumerate_help():
 
 
 def test_enumerate_not_authenticated():
-    with patch("azauth.commands.enumerate.AzureAuthenticator") as MockAuth:
+    with patch("fenrir.commands.enumerate.AzureAuthenticator") as MockAuth:
         instance = Mock()
         instance.get_token.return_value = Mock(
             success=False,
@@ -34,7 +34,7 @@ def test_enumerate_bad_format():
 
 
 def test_enumerate_json_output():
-    with patch("azauth.commands.enumerate.AzureAuthenticator") as MockAuth:
+    with patch("fenrir.commands.enumerate.AzureAuthenticator") as MockAuth:
         instance = Mock()
         instance.get_token.return_value = Mock(
             success=True,
@@ -65,7 +65,7 @@ def test_enumerate_json_output():
         mock_collector.result = result_data
         MockAuth.return_value = instance
 
-        with patch("azauth.commands.enumerate.EnumerateCollector") as MockCollector:
+        with patch("fenrir.commands.enumerate.EnumerateCollector") as MockCollector:
             MockCollector.return_value = mock_collector
 
             result = runner.invoke(app, ["enumerate", "--format", "json"])
@@ -73,8 +73,8 @@ def test_enumerate_json_output():
 
 
 def test_enumerate_tree_output():
-    with patch("azauth.commands.enumerate.AzureAuthenticator") as MockAuth, \
-         patch("azauth.commands.enumerate.EnumerateCollector") as MockCollector:
+    with patch("fenrir.commands.enumerate.AzureAuthenticator") as MockAuth, \
+         patch("fenrir.commands.enumerate.EnumerateCollector") as MockCollector:
 
         instance = Mock()
         instance.get_token.return_value = Mock(
@@ -108,8 +108,8 @@ def test_enumerate_tree_output():
 def test_enumerate_with_output_file(tmp_path):
     out = tmp_path / "enumerate.txt"
 
-    with patch("azauth.commands.enumerate.AzureAuthenticator") as MockAuth, \
-         patch("azauth.commands.enumerate.EnumerateCollector") as MockCollector:
+    with patch("fenrir.commands.enumerate.AzureAuthenticator") as MockAuth, \
+         patch("fenrir.commands.enumerate.EnumerateCollector") as MockCollector:
 
         instance = Mock()
         instance.get_token.return_value = Mock(
@@ -139,8 +139,8 @@ def test_enumerate_with_output_file(tmp_path):
 
 
 def test_enumerate_no_resources():
-    with patch("azauth.commands.enumerate.AzureAuthenticator") as MockAuth, \
-         patch("azauth.commands.enumerate.EnumerateCollector") as MockCollector:
+    with patch("fenrir.commands.enumerate.AzureAuthenticator") as MockAuth, \
+         patch("fenrir.commands.enumerate.EnumerateCollector") as MockCollector:
 
         instance = Mock()
         instance.get_token.return_value = Mock(

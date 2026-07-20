@@ -7,12 +7,12 @@ from typing import Any
 
 log = logging.getLogger(__name__)
 
-CONTAINER_NAME = "azauth-neo4j"
+CONTAINER_NAME = "fenrir-neo4j"
 IMAGE = "neo4j:4.4"  # pinned — Docker pulls once, caches forever
 DEFAULT_HTTP_PORT = 7474
 DEFAULT_BOLT_PORT = 7687
-DEFAULT_PASSWORD = "azauth_neo4j"
-DATA_VOLUME = "azauth-neo4j-data"
+DEFAULT_PASSWORD = "fenrir_neo4j"
+DATA_VOLUME = "fenrir-neo4j-data"
 
 
 def _docker_cmd(*args: str) -> subprocess.CompletedProcess:
@@ -192,7 +192,7 @@ def remove_container() -> bool:
 
 def wait_for_ready(timeout: int = 60) -> bool:
     import time
-    from azauth.db.client import Neo4jConnection
+    from fenrir.db.client import Neo4jConnection
 
     params = get_connection_params()
     deadline = time.time() + timeout

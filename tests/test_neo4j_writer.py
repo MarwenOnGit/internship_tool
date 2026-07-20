@@ -1,8 +1,8 @@
 from unittest.mock import Mock
 
-from azauth.bloodhound.client import CypherResult
-from azauth.edges.edge_builder import EdgeDescriptor
-from azauth.edges.neo4j_writer import Neo4jWriter
+from fenrir.bloodhound.client import CypherResult
+from fenrir.edges.edge_builder import EdgeDescriptor
+from fenrir.edges.neo4j_writer import Neo4jWriter
 
 
 def _make_writer(bh_client=None):

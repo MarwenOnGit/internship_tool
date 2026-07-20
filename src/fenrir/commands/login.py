@@ -7,7 +7,7 @@ from pathlib import Path
 import typer
 from rich.console import Console
 
-from azauth.core.authenticator import (
+from fenrir.core.authenticator import (
     TOKEN_CACHE_DIR,
     AuthFlow,
     AzureAuthenticator,

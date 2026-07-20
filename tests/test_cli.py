@@ -3,7 +3,7 @@ from unittest.mock import Mock, patch
 
 from typer.testing import CliRunner
 
-from azauth.cli import app
+from fenrir.cli import app
 
 runner = CliRunner()
 
@@ -24,7 +24,7 @@ def test_login_bad_auth_flow():
     assert result.exit_code == 2
 
 
-@patch("azauth.commands.login.AzureAuthenticator")
+@patch("fenrir.commands.login.AzureAuthenticator")
 def test_login_device_code_success(MockAuth):
     instance = Mock()
     instance.authenticate.return_value = Mock(
@@ -40,7 +40,7 @@ def test_login_device_code_success(MockAuth):
     assert "Authenticated" in result.stderr
 
 
-@patch("azauth.commands.login.AzureAuthenticator")
+@patch("fenrir.commands.login.AzureAuthenticator")
 def test_login_ropc_success(MockAuth):
     instance = Mock()
     instance.authenticate.return_value = Mock(
@@ -67,7 +67,7 @@ def test_login_ropc_missing_password():
     assert result.exit_code == 2
 
 
-@patch("azauth.commands.login.AzureAuthenticator")
+@patch("fenrir.commands.login.AzureAuthenticator")
 def test_login_with_password_file(MockAuth):
     pf = Path("/tmp/test_password_file.txt")
     pf.write_text("supersecret\n")
@@ -94,7 +94,7 @@ def test_login_with_password_file(MockAuth):
     assert result.exit_code == 0
 
 
-@patch("azauth.commands.login.AzureAuthenticator")
+@patch("fenrir.commands.login.AzureAuthenticator")
 def test_login_failure(MockAuth):
     instance = Mock()
     instance.authenticate.return_value = Mock(
@@ -124,7 +124,7 @@ def test_token_help():
     assert result.exit_code == 0
 
 
-@patch("azauth.commands.token.AzureAuthenticator")
+@patch("fenrir.commands.token.AzureAuthenticator")
 def test_token_missing_token(MockAuth):
     instance = Mock()
     instance.get_token.return_value = Mock(
@@ -138,7 +138,7 @@ def test_token_missing_token(MockAuth):
     assert result.exit_code != 0
 
 
-@patch("azauth.commands.token.AzureAuthenticator")
+@patch("fenrir.commands.token.AzureAuthenticator")
 def test_token_raw(MockAuth):
     instance = Mock()
     instance.get_token.return_value = Mock(

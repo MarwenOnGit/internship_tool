@@ -1,12 +1,12 @@
 [project]
-name = "azauth"
+name = "fenrir"
 version = "0.1.0"
 description = "Azure CLI authenticator — email/password login with automatic MFA fallback"
 requires-python = ">=3.11"
 dependencies = ["typer>=0.12", "msal>=1.24", "rich", "requests>=2.31", "neo4j>=5.20"]
 
 [project.scripts]
-azauth = "azauth.cli:app"
+fenrir = "fenrir.cli:app"
 
 [project.optional-dependencies]
 dev = ["pytest", "pytest-cov"]
