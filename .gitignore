@@ -10,12 +10,20 @@ build/
 .venv*/
 .neo4j/
 .neo4j*/
+
+# Node
+node_modules/
+
 # Testing
 .pytest_cache/
 coverage/
 
 # Token cache (secrets)
 ~/.config/fenrir/
+fenrir_tokens/
+
+# Extracted tokens
+*.token
 
 # IDE
 .vscode/
@@ -44,10 +52,14 @@ tools/
 # Coverage reports
 .coverage
 htmlcov/
-coverage/
 
 # Logs
 *.log
 
 # OS artifacts
 *~
+
+# Debug / backup
+fenrir_debug.py
+*.bak
+*.ow
